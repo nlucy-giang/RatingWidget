@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Rating Widget</title>
+    <style>
+        body {
+            font-family: 'Arial', sans-serif;
+            text-align: left; /* Align content to the left */
+            margin: 50px;
+        }
+
+        #rating-widget {
+            font-size: 24px;
+            margin-bottom: 20px;
+        }
+
+        #rating-widget span {
+            color: #ddd;
+            cursor: pointer;
+            transition: color 0.3s;
+            display: inline-block;
+        }
+
+        #rating-widget span:hover,
+        #rating-widget span.active,
+        #rating-widget span:hover ~ span.active {
+            color: #ffcc00;
+        }
+
+        #rating-message {
+            font-size: 18px;
+            margin-top: 20px;
+        }
+
+        /* Hide the input field visually but keep it accessible */
+        #rating {
+            position: absolute;
+            left: -9999px;
+        }
+    </style>
+</head>
+<body>
+<h2>Rating Widget</h2>
+<noscript>
+    <div id="rating-widget">
+        <form action="https://httpbin.org/post" method="POST">
+            <label for="rating">How satisfied are you?</label>
+            <input type="hidden" name="question" value="How satisfied are you?">
+            <input type="hidden" name="sentBy" value="HTML">
+            <input type="number" id="rating-no-js" name="rating" min="1" max="5" value="0" required>
+            <button type="submit">Submit</button>
+        </form>
+    </div>
+</noscript>
+
+<form id="rating-form">
+    <!-- Hidden input field for rating -->
+    <input type="number" id="rating" name="rating" min="1" max="10" required>
+
+
+
+    <div id="rating-widget"></div>
+
+</form>
+
+<div id="rating-message"></div>
+
+<script>
+    document.getElementById('rating-form').addEventListener('input', updateStars);
+
+    function updateStars() {
+        const maxRating = document.getElementById('rating').max;
+        const ratingWidget = document.getElementById('rating-widget');
+        ratingWidget.innerHTML = ''; // Clear previous stars
+
+        for (let i = 1; i <= 10; i++) {
+            if (i <= maxRating) {
+                const starSpan = document.createElement('span');
+                starSpan.textContent = '★';
+                starSpan.addEventListener('mouseover', function() { highlightStars(i); });
+                starSpan.addEventListener('click', function() { rate(i); });
+                ratingWidget.appendChild(starSpan);
+            }
+        }
+    }
+
+    function highlightStars(value) {
+        const stars = document.querySelectorAll('#rating-widget span');
+        stars.forEach((star, index) => {
+            if (index < value) {
+                star.classList.add('active');
+            } else {
+                star.classList.remove('active');
+            }
+        });
+    }
+
+    function rate(value) {
+        const maxRating = document.getElementById('rating').max;
+        document.getElementById('rating').value = value;
+        console.log('Rating submitted:', value);
+
+        // Calculate the percentage
+        const percentage = (value / maxRating) * 100;
+
+        // Replace stars with message
+        const messageDiv = document.getElementById('rating-message');
+        const rating = parseInt(value);
+
+        if (percentage >= 80) {
+            messageDiv.innerText = `Thanks for ${rating} star rating!`;
+        } else {
+            messageDiv.innerText = `Thanks for your feedback of ${rating} stars. We'll try to do better!`;
+        }
+
+        // Send additional information
+        const xhr = new XMLHttpRequest();
+        xhr.open('POST', 'https://httpbin.org/post', true);
+        xhr.setRequestHeader('X-Sent-By', 'JS');
+
+        const formData = new FormData();
+        formData.append('question', 'How satisfied are you?');
+        formData.append('rating', value);
+        formData.append('sentBy', 'JS');
+
+        xhr.send(formData);
+
+        // Hide the rating widget after submission
+        document.getElementById('rating-widget').style.display = 'none';
+    }
+
+    // Initial stars update
+    updateStars();
+</script>
+
+</body>
+</html>
